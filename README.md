@@ -87,7 +87,7 @@ python main.py
 
 ## Project Links
 
-- **GitHub Repository:** https://github.com/<your-username>/<your-repo>
+- **GitHub Repository:** https://github.com/AbbieLiu999/vancouver-neighbourhood-finder.git
 - **GitHub Pages Map:** https://abbieliu999.github.io/vancouver-neighbourhood-finder/
 > Replace the placeholders above with your actual links before submission.
 
