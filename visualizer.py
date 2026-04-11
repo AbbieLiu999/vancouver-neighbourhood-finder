@@ -106,7 +106,7 @@ class Visualizer:
         )
 
     # ── Chart 1 — Green Space vs Transit scatter ──────────────────────────────
-    # Insight 1: the fundamental trade-off every newcomer faces
+    # Question: Is there a trade-off between green space and transit access across Vancouver neighbourhoods?
 
     def chart_green_vs_transit(self):
         """
@@ -174,7 +174,8 @@ class Visualizer:
         print(f"  Saved {out}")
 
     # ── Chart 2 — Facility breakdown stacked bar ───────────────────────────────
-    # Insight 2: underserved neighbourhoods — each facility type its own colour
+    # Question: Which neighbourhoods have the most parks with the facilities that matter most to newcomers, 
+    # e.g. playgrounds, sports fields, dog off-leash areas?
 
     def chart_most_facilities(self):
         """
@@ -236,7 +237,8 @@ class Visualizer:
         print(f"  Saved {out}")
 
     # ── Chart 3 — Dog lovers: off-leash areas + transit ───────────────────────
-    # Insight 3: best and worst neighbourhoods for dog owners
+    # Question: For dog owners who use transit, which neighbourhoods combine off-leash access with 
+    # better transit coverage?
 
     def chart_dog_lovers(self):
         """
