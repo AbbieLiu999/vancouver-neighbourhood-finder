@@ -1,3 +1,4 @@
+
 """
 models.py
 =========
@@ -18,7 +19,7 @@ class Park:
 
     facilities is a list of facility type strings joined from
     parks-facilities.csv on ParkID, e.g.:
-      ["Playgrounds", "Dogs Off-Leash Areas", "Tennis Courts"]
+    ["Playgrounds", "Dogs Off-Leash Areas", "Tennis Courts"]
     """
 
     def __init__(self, park_id, name, neighbourhood, lat, lon,

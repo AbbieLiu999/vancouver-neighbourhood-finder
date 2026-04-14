@@ -121,7 +121,7 @@ class Visualizer:
             for neighbourhood in neighbourhood_names
         ]
         transit_stops_list = [
-            self.summary.data[neighbourhood]["transit_stops"]
+            self.summary.data[neighbourhood]["transit_count"]
             for neighbourhood in neighbourhood_names
         ]
 
@@ -176,7 +176,6 @@ class Visualizer:
     # ── Chart 2 — Facility breakdown stacked bar ───────────────────────────────
     # Question: Which neighbourhoods have the most parks with the facilities that matter most to newcomers, 
     # e.g. playgrounds, sports fields, dog off-leash areas?
-
     def chart_most_facilities(self):
         """
         Stacked horizontal bar: all neighbourhoods ranked by total facilities,
@@ -237,8 +236,8 @@ class Visualizer:
         print(f"  Saved {out}")
 
     # ── Chart 3 — Dog lovers: off-leash areas + transit ───────────────────────
-    # Question: For dog owners who use transit, which neighbourhoods combine off-leash access with 
-    # better transit coverage?
+    # Question: For dog owners who use transit, which neighbourhoods combine off-leash access
+    # with better transit coverage?
 
     def chart_dog_lovers(self):
         """
@@ -253,7 +252,7 @@ class Visualizer:
             self.summary.data.keys(),
             key=lambda neighbourhood: (
                 self.summary.data[neighbourhood]["facility_counts"].get("Dogs Off-Leash Areas", 0),
-                self.summary.data[neighbourhood]["transit_stops"],
+                self.summary.data[neighbourhood]["transit_count"],
             ),
             reverse=True,
         )
@@ -264,7 +263,7 @@ class Visualizer:
             for neighbourhood in sorted_neighbourhoods
         ]
         transit_stop_counts = [
-            self.summary.data[neighbourhood]["transit_stops"]
+            self.summary.data[neighbourhood]["transit_count"]
             for neighbourhood in sorted_neighbourhoods
         ]
 
@@ -361,9 +360,9 @@ class Visualizer:
         a popup listing the exact facilities that park has.
         Multiple layers can be active at once.
         """
-        out = "map.html"
+        output_path = "map.html"
 
-        m = folium.Map(
+        map_object = folium.Map(
             location=[49.248, -123.117],
             zoom_start=12,
             tiles="CartoDB positron",
@@ -374,7 +373,7 @@ class Visualizer:
         base_layer = folium.FeatureGroup(name="🌲 All Parks", show=True)
         for park in self.summary.registry.all_parks():
             neighbourhood_data = self.summary.data.get(park.neighbourhood, {})
-            neighbourhood_transit_stops = neighbourhood_data.get("transit_stops", 0)
+            neighbourhood_transit_count = neighbourhood_data.get("transit_count", 0)
             neighbourhood_total_hectares = neighbourhood_data.get("total_hectares", 0.0)
             facilities_list = ", ".join(park.facilities) if park.facilities else "No recorded facilities"
 
@@ -384,7 +383,7 @@ class Visualizer:
                 f"Area: {park.hectares:.1f} ha<br>"
                 f"Facilities: {len(park.facilities)}<br>"
                 f"{facilities_list}<br>"
-                f"Transit stops nearby: {neighbourhood_transit_stops}<br>"
+                f"Transit stops nearby: {neighbourhood_transit_count}<br>"
                 f"Total green space: {neighbourhood_total_hectares:.1f} ha"
             )
             folium.CircleMarker(
@@ -398,7 +397,7 @@ class Visualizer:
                 popup=folium.Popup(popup_text, max_width=280),
                 tooltip=f"🌲 {park.name}  |  {park.neighbourhood}",
             ).add_to(base_layer)
-        base_layer.add_to(m)
+        base_layer.add_to(map_object)
 
         # ── One layer per category ────────────────────────────────
         for layer_name, layer_config in self.MAP_LAYERS.items():
@@ -407,7 +406,7 @@ class Visualizer:
 
             emoji = layer_name.split()[0]
             facility_types = layer_config["types"]
-            layer = folium.FeatureGroup(name=layer_name, show=False)
+            facility_layer = folium.FeatureGroup(name=layer_name, show=False)
 
             # collect parks that have at least one facility in this category
             seen_park_ids = set()
@@ -439,20 +438,19 @@ class Visualizer:
                             f"{emoji} {park.name}  |  "
                             f"{matching_facilities_text}"
                         ),
-                    ).add_to(layer)
+                    ).add_to(facility_layer)
 
-            layer.add_to(m)
+            facility_layer.add_to(map_object)
 
-        # ── Transit stops layer — only stops inside Vancouver ─────
-        # Get all stops that have been assigned to a Vancouver neighbourhood
-        # (Metro Vancouver stops outside the city are not in stops_by_neighbourhood)
-        stop_layer = folium.FeatureGroup(name="🚌 Transit Stops", show=False)
-        transit_stops = [
+        # ── Transit stops layer ───────────────────────────────────
+        # Uses pre-assigned stops from the summary network.
+        transit_layer = folium.FeatureGroup(name="🚌 Transit Stops", show=False)
+        assigned_transit_stops = [
             stop
             for stops_list in self.summary.network.stops_by_neighbourhood.values()
             for stop in stops_list
         ]
-        for transit_stop in transit_stops:
+        for transit_stop in assigned_transit_stops:
             folium.CircleMarker(
                 location=[transit_stop.lat, transit_stop.lon],
                 radius=3,
@@ -462,11 +460,11 @@ class Visualizer:
                 fill_opacity=0.65,
                 weight=0,
                 tooltip=transit_stop.name,
-            ).add_to(stop_layer)
-        stop_layer.add_to(m)
+            ).add_to(transit_layer)
+        transit_layer.add_to(map_object)
 
         # ── Layer control ────────────────────────────────────────
-        folium.LayerControl(collapsed=False).add_to(m)
+        folium.LayerControl(collapsed=False).add_to(map_object)
 
-        m.save(out)
-        print(f"  Saved {out}")
+        map_object.save(output_path)
+        print(f"  Saved {output_path}")

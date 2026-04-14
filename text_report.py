@@ -3,8 +3,6 @@ text_report.py
 ==============
 Standalone runnable script that prints a formatted text report to the console.
 
-    python text_report.py
-
 Report includes:
   - A summary of each dataset (record counts, key statistics)
   - At least three meaningful insights drawn from the data

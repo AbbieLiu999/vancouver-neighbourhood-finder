@@ -68,7 +68,7 @@ All imported libraries are required for the full program (`main.py`).
 If any are missing (including `folium`), Python will raise an import error.
 
 ```bash
-python -m pip install pandas matplotlib folium shapely
+python -m pip install pandas numpy matplotlib folium shapely
 ```
 
 ### 3. Run the text report only
@@ -87,7 +87,7 @@ python main.py
 
 ## Project Links
 
-- **GitHub Repository:** https://github.com/AbbieLiu999/vancouver-neighbourhood-finder.git
+- **GitHub Repository:**  https://github.com/AbbieLiu999/vancouver-neighbourhood-finder.git
 - **GitHub Pages Map:** https://abbieliu999.github.io/vancouver-neighbourhood-finder/
 
 ---
@@ -115,6 +115,7 @@ map.html             Generated interactive map
 | Library | Purpose |
 |---|---|
 | `pandas` | Reading and joining CSV files |
+| `numpy` | Numeric arrays and scaling logic for chart calculations |
 | `matplotlib` | Saving PNG charts |
 | `folium` | Interactive map with toggleable facility layers |
 | `shapely` | Point-in-polygon geometry for assigning stops to neighbourhoods |
