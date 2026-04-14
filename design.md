@@ -2,12 +2,7 @@
 
 ## Overview
 
-This project combines four open datasets to help newcomers compare Vancouver
-neighbourhoods by practical needs: transit access, total green space, and
-park facilities (dog off-leash, family, sports, outdoors, and community).
-
-The current implementation intentionally uses raw counts and raw area totals.
-No custom weighted score is used.
+This project combines four open datasets to help newcomers compare Vancouver neighbourhoods by practical needs: transit access, total green space, and park facilities (dog off-leash, family, sports, outdoors, and community).
 
 
 ## Data Sources Used
@@ -26,15 +21,11 @@ models.py
         - Neighbourhood
 
 data_loader.py
-        - ensure_data_files_exist()
-        - load_core_data()
         - ParkRegistry
         - TransitNetwork
         - NeighbourhoodBoundaries
 
 analyzer.py
-        - PROFILES
-        - build_summary()
         - NeighbourhoodSummary
         - ReportGenerator
 
@@ -56,93 +47,40 @@ text_report.py
 4) Visualizer writes 3 PNG charts and map.html
 
 
-## Class Responsibilities (Current)
+## Class Responsibilities
+
+Class descriptions below follow the same order as classes appear in the source files.
 
 ### Park (models.py)
-Represents a single park record with ID, name, neighbourhood, coordinates,
-hectares, and facilities.
-
-Method:
-- has_facility(facility_type)
-
+`Park` models one record from the parks dataset and is responsible for storing park-level information in a clean, reusable object. Its key attributes are `park_id`, `name`, `neighbourhood`, `lat`, `lon`, `hectares`, and `facilities`. Its key method is `has_facility(facility_type)`, which supports higher-level filtering and map layer logic without duplicating facility-check code elsewhere.
 
 ### TransitStop (models.py)
-Represents one stop with ID, name, and coordinates.
-
+`TransitStop` models one GTFS stop and is responsible for representing stop identity and location only. Its key attributes are `stop_id`, `name`, `lat`, and `lon`. It intentionally has no complex methods because its role is to act as a simple entity that can be loaded, assigned to neighbourhoods, counted, and visualized by other classes.
 
 ### Neighbourhood (models.py)
-Represents one boundary polygon.
-
-Method:
-- contains(lat, lon)
-
+`Neighbourhood` models one boundary polygon and is responsible for geometric containment checks. Its key attributes are `name` and `polygon`. Its key method is `contains(lat, lon)`, which performs the point-in-polygon test used to determine whether transit stops belong to a specific Vancouver neighbourhood.
 
 ### ParkRegistry (data_loader.py)
-Loads parks + facilities CSV, joins via ParkID, and exposes park queries.
-
-Methods:
-- load_from_csv(parks_path, facilities_path)
-- all_parks()
-- parks_with_facility(facility_type)
-- all_facility_types()
-
+`ParkRegistry` is responsible for loading and joining `parks.csv` with `parks-facilities.csv` and exposing park-level query helpers. Its key attribute is `parks` (a list of `Park` objects). Its key methods are `load_from_csv(parks_path, facilities_path)`, `all_parks()`, `parks_with_facility(facility_type)`, and `all_facility_types()`, plus internal helpers used for coordinate parsing and row-to-object conversion.
 
 ### TransitNetwork (data_loader.py)
-Loads all transit stops from GTFS stops.txt without filtering.
-Neighbourhood assignment is performed on-demand by analyzer.py.
-
-Attributes:
-- stops: list of all TransitStop objects
-- stops_by_neighbourhood: dict mapping neighbourhood name -> list of TransitStop
-
-Methods:
-- load_from_csv(stops_path)
-- assign_to_neighbourhoods(boundaries)  [called by NeighbourhoodSummary]
-
+`TransitNetwork` is responsible for loading transit stop records, applying an initial Metro Vancouver bounding-box filter at load time, and preparing reusable neighbourhood assignments. Its key attributes are `stops` (filtered loaded `TransitStop` objects) and `stops_by_neighbourhood` (a cached mapping for fast counting and mapping). Its key methods are `load_from_csv(stops_path)` and `assign_to_neighbourhoods(boundaries)`, where assignment is computed once and reused by analysis and visualization.
 
 ### NeighbourhoodBoundaries (data_loader.py)
-Loads GeoJSON polygons and resolves which neighbourhood contains a point.
-
-Methods:
-- load_from_geojson(boundaries_path)
-- neighbourhood_of(lat, lon)
-
+`NeighbourhoodBoundaries` is responsible for loading GeoJSON boundary shapes and resolving neighbourhood membership for coordinates. Its key attribute is `neighbourhoods` (a list of `Neighbourhood` objects). Its key methods are `load_from_geojson(boundaries_path, neighbourhood_name_lookup=None)` for ingesting polygons and `neighbourhood_of(lat, lon)` for returning the matching neighbourhood name.
 
 ### NeighbourhoodSummary (analyzer.py)
-Aggregates park/facility/transit data into one dict per neighbourhood.
-Builds neighbourhood summary by joining four data sources.
-
-Per-neighbourhood fields (current):
-- park_count
-- total_hectares
-- transit_stops
-- facility_counts
-
-Methods:
-- build()  [runs all aggregation steps]
-- top_by(field, n=5, facility_type=None, facility_types=None)
-- _init_neighbourhoods()
-- _add_park_counts()
-- _add_facility_counts()
-- _add_transit_counts()  [triggers assign_to_neighbourhoods() on first call]
-
+`NeighbourhoodSummary` is the core analysis class, responsible for joining parks, facilities, transit stops, and boundaries into one per-neighbourhood summary table. Its key attributes are `registry`, `boundaries`, `network`, and `data`, where each neighbourhood row stores `park_count`, `total_hectares`, `transit_count`, and `facility_counts`. Its key public methods are `build()` (pipeline entry) and `top_by(...)` (ranking helper for ranking/report sections).
 
 ### ReportGenerator (analyzer.py)
-Formats and prints report sections for transit, green space, profile
-facility counts, and key insights.
-
-Main method:
-- print_summary(summary)
-
+`ReportGenerator` is responsible for transforming summary data into a human-readable console report focused on newcomer decision-making. Its key attribute is `top_n` (how many neighbourhoods to show per ranking section). Its key method is `print_summary(summary)`, which orchestrates dataset summary, transit/green/facility rankings, profile-based sections, and cross-dataset insights.
 
 ### Visualizer (visualizer.py)
-Writes three matplotlib charts and one folium map.
+`Visualizer` is responsible for producing all visual outputs from a built summary object. Its key attributes are `summary`, `charts_dir`, `COLORS`, and `MAP_LAYERS`. Its key methods are `chart_green_vs_transit()`, `chart_most_facilities()`, `chart_dog_lovers()`, and `save_map()`, which together generate the three required static charts and the interactive folium map.
 
-Methods:
-- chart_green_vs_transit()
-- chart_most_facilities()
-- chart_dog_lovers()
-- save_map()
+## Class Interaction Overview
+
+The interaction flow is linear and layered: `main.py` triggers `build_summary()`, which uses data-loading classes (`ParkRegistry`, `TransitNetwork`, and `NeighbourhoodBoundaries`) to create domain objects (`Park`, `TransitStop`, `Neighbourhood`). `NeighbourhoodSummary` then joins these datasets into neighbourhood-level metrics. From that shared summary, `ReportGenerator` produces the text report and `Visualizer` produces charts and map output. This keeps each class focused on one responsibility while allowing all outputs to be generated from a single, consistent summary state.
 
 
 ## Current Output Files
@@ -155,11 +93,11 @@ Methods:
 
 ## Design Notes
 
-- **Data loading:** data_loader loads all raw data without filtering.
-- **Filtering:** analyzer.py filters transit stops by neighbourhood boundary.
-- **Performance:** Transit stops are assigned once (in assign_to_neighbourhoods)
-  and cached in stops_by_neighbourhood for reuse.
+- **Data loading:** data_loader.py loads datasets and applies Metro Vancouver bounding-box filtering to transit stops.
+- **Robustness:** loaders now fail gracefully: malformed transit rows, park rows, facility rows, and GeoJSON features are skipped; missing required columns in CSVs or invalid GeoJSON structure trigger clear error messages.
+- **Filtering:** analyzer.py performs neighbourhood-level assignment/counting using boundary geometry.
+- **Performance:** Transit stops are assigned once (in assign_to_neighbourhoods) and cached in stops_by_neighbourhood for reuse.
 - **Point-in-polygon:** Uses shapely geometry for accurate neighbourhood assignment.
 - **Map layers:** One emoji per facility category in layer control (not per type).
-- **Transit visualization:** Circle markers on map; stops filtered to Vancouver only.
+- **Transit visualization:** Circle markers on map; uses stops assigned to Vancouver neighbourhoods.
 - **Park visualization:** Circle markers sized by hectares; base layer always shown.
