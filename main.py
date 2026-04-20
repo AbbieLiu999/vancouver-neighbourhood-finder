@@ -1,6 +1,7 @@
 """
 Vancouver Neighbourhood Finder — For Newcomers
-===============================================
+==============================================
+
 Combines four open datasets to help newcomers choose which Vancouver
 neighbourhood to live in based on what matters most to them.
 
@@ -27,8 +28,9 @@ Then run:
     python main.py
 """
 
-from analyzer    import build_summary, ReportGenerator
-from visualizer  import Visualizer
+from summary_builder import build_summary
+from report_generator import ReportGenerator
+from visualizer import Visualizer
 
 DIVISION = "=" * 62
 

@@ -3,11 +3,6 @@ text_report.py
 ==============
 Standalone runnable script that prints a formatted text report to the console.
 
-Report includes:
-  - A summary of each dataset (record counts, key statistics)
-  - At least three meaningful insights drawn from the data
-  - At least one insight that connects multiple datasets
-
 Datasets required in data/:
   data/parks.csv
   data/parks-facilities.csv
@@ -17,7 +12,8 @@ Datasets required in data/:
 See README.md for download instructions.
 """
 
-from analyzer import build_summary, ReportGenerator
+from summary_builder import build_summary
+from report_generator import ReportGenerator
 
 
 def main():

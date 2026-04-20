@@ -5,6 +5,10 @@ to help newcomers choose which neighbourhood to live in based on what
 matters most to them — transit access, green space, dog parks, playgrounds,
 or sports facilities.
 
+Visualization code is organised as a facade + mixin split:
+`visualizer.py` exposes one public `Visualizer` API, while
+`chart_visualizer.py` and `map_visualizer.py` contain chart and map internals.
+
 ---
 
 ## What the program produces
@@ -97,15 +101,33 @@ python main.py
 ```
 main.py              Entry point — runs full analysis, charts, and map
 text_report.py       Prints text report to console
-models.py            Park, TransitStop, Neighbourhood  (domain objects)
-data_loader.py       ParkRegistry, TransitNetwork, NeighbourhoodBoundaries
-analyzer.py          NeighbourhoodSummary, ReportGenerator  (analysis)
-visualizer.py        Visualizer  (charts + interactive map)
-design.md            Class design written before coding
-README.md            This file
-data/                Downloaded datasets (not included in repo)
-charts/              Generated PNG charts (created on first run)
-map.html             Generated interactive map
+
+Parks data layer:
+  parks.py           Park model + ParkRegistry (load parks.csv + facilities)
+
+Transit data layer:
+  transit.py         TransitStop model + TransitNetwork (load stops.txt)
+
+Boundaries data layer:
+  boundaries.py      Neighbourhood model + NeighbourhoodBoundaries (load GeoJSON)
+
+Analysis layer:
+  summary_builder.py build_summary() (dataset loading + wiring)
+  summary.py         NeighbourhoodSummary (aggregation model)
+  profiles.py        Facility category definitions (shared by report + map)
+  report_generator.py ReportGenerator (text report)
+
+Visualization layer:
+  visualizer.py      Visualizer facade (keeps one public API)
+  chart_visualizer.py ChartVisualizerMixin (3 matplotlib charts)
+  map_visualizer.py  MapVisualizerMixin (folium interactive map)
+
+Supporting:
+  design.md          Class design written before coding
+  README.md          This file
+  data/              Downloaded datasets (not included in repo)
+  charts/            Generated PNG charts (created on first run)
+  map.html           Generated interactive map
 ```
 
 ---
